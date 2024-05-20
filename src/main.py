@@ -6,6 +6,7 @@
 
 import os
 import timeit
+from DisplayTree import TreeVisualizer
 
 # Función para limpiar la pantalla
 clear = lambda: os.system('cls')
@@ -30,19 +31,44 @@ class Tree:
         self.root = None
         self.contar_dfs: int = 0
         self.contar_bfs: int = 0
-    # Aquí ocurre la magia
-    def insertar(self, nodo: Nodo) -> None:
-        self.root = self.insertar_aux(self.root, nodo)
+        self.peso: int = 0
+    # tipo 1: insertar automáticamente 2: insertar manualmente
+    def insertar(self, nodo: Nodo, tipo: int) -> None:
+        if tipo == 1:
+            self.root = self.auto_insertar(self.root, nodo)
+        elif tipo == 2:
+            self.root = self.manual_insertar(self.root, nodo, 0, 'Root: ')
+        else:
+            print('Tipo de recorrido no valido')
     # El propósito de está función es de servir de auxiliar para que solo podamos insertar un único argumento.
-    def insertar_aux(self, root: Nodo, nodo: Nodo) -> None:
+    def auto_insertar(self, root: Nodo, nodo: Nodo) -> Nodo:
         if root is None:
             return nodo
         else:
             if len(root.dato.apellido) > len(nodo.dato.apellido):
-                root.izquierda = self.insertar_aux(root.izquierda, nodo)
+                root.izquierda = self.auto_insertar(root.izquierda, nodo)
             else:
-                root.derecha = self.insertar_aux(root.derecha, nodo)
+                root.derecha = self.auto_insertar(root.derecha, nodo)
             return root
+    def manual_insertar(self, root: Nodo, nodo: Nodo, level: int, prefix: str) -> Nodo:
+        if root is None:
+            print('Nivel: ', level)
+            print('Dirección: ', prefix)
+            return nodo
+        else:
+            print('Nivel: ', level)
+            print('Dirección: ', prefix)
+            if len(root.dato.apellido) > len(nodo.dato.apellido):
+                root.izquierda = self.manual_insertar(root.izquierda, nodo, level + 1, 'Izq')
+            else:
+                root.derecha = self.manual_insertar(root.derecha, nodo, level + 1, "Der")
+            return root
+    def obtener_altura(self):
+        return self.height(self.root)
+    def obtener_peso(self) -> int:
+        self.peso = 0
+        self.weight(self.root)
+        return self.peso
     # Obtener la altura del árbol
     def height(self, root: Nodo) -> int:
         if root is None:
@@ -54,6 +80,15 @@ class Tree:
                 return izq_height + 1
             else:
                 return der_height + 1
+    # Obtener el peso del árbol
+    def weight(self, root: Nodo) -> None:
+        if root is None:
+            return
+        else:
+            if root.izquierda == None and root.derecha == None:
+                self.peso = self.peso + 1
+            self.weight(root.izquierda)
+            self.weight(root.derecha)
     # 1: búsqueda DFS 2: búsqueda BFS
     def buscar(self, apellido: str, tipo: int) -> Nodo:
         self.contar_dfs = 0
@@ -123,6 +158,8 @@ class Tree:
             self.mostrar_postorden(self.root)
         elif tipo == 4:
             self.mostrar_en_forma_grafica(self.root)
+        elif tipo == 5:
+            TreeVisualizer.display(self.root)
         else:
             print('Tipo de recorrido no válido')
     def mostrar_en_forma_grafica(self, root: Nodo, level=0, prefix="Root: "):
@@ -144,14 +181,15 @@ def main():
     tree = Tree()
     while True:
         print('Menu:')
-        print('1> Insertar Archivo')
-        print('2> Recorrido Pre-Orden')
-        print('3> Recorrido In-Orden')
-        print('4> Recorrido Post-Orden')
-        print('5> DFS')
-        print('6> BFS')
-        print('7> Mostrar Gráfico')
-        print('8> Salir')
+        print('1> Insertar Datos Manualmente')
+        print('2> Insertar Archivo')
+        print('3> Recorrido Pre-Orden')
+        print('4> Recorrido In-Orden')
+        print('5> Recorrido Post-Orden')
+        print('6> DFS')
+        print('7> BFS')
+        print('8> Altura, Peso del Árbol y Ver Gráfico')
+        print('9> Salir')
         print()
         try:
             opcion = int(input('Ingrese una opcion: '))
@@ -161,8 +199,20 @@ def main():
             clear()
             continue
         print()
-        if controlar_opcion(opcion, [1, 2, 3, 4, 5, 6, 7, 8]):
+        if controlar_opcion(opcion, [1, 2, 3, 4, 5, 6, 7, 8, 9]):
             if opcion == 1:
+                clear()
+                print('Ingresar los datos de la Persona\n')
+                tree.insertar(Nodo(Persona(
+                    input('Ingresar ID: '),
+                    input('Ingresar Nombre: '),
+                    input('Ingresar Apellido: '),
+                    input('Ingresar Pais: '),
+                    input('Ingresar Ciudad: '),
+                    input('Ingresar Genero: '))), 2)
+                input('Presione cualquier tecla para continuar...')
+                clear()
+            elif opcion == 2:
                 clear()
                 dir_archivo = input('Ingresar la dirección del archivo: ')
                 '''
@@ -179,14 +229,14 @@ def main():
                     with open(dir_archivo, encoding="utf8") as csvfile:
                         for x in csvfile:
                             valores = x.strip().split(',')
-                            tree.insertar(Nodo(Persona(valores[0], valores[1], valores[2], valores[3], valores[4], valores[5])))
+                            tree.insertar(Nodo(Persona(valores[0], valores[1], valores[2], valores[3], valores[4], valores[5])), 1)
                         csvfile.close()
                         print('✔Archivo cargado e insertado en el árbol binario✔')
                 except FileExistsError as e:
                     print('Error 😱: ' + e)
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 2:
+            elif opcion == 3:
                 clear()
                 print('Pre-Orden:')
                 print('---------------------------------------------------------------')
@@ -197,7 +247,7 @@ def main():
                 print('\n---------------------------------------------------------------')
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 3:
+            elif opcion == 4:
                 clear()
                 print('In-Orden:')
                 print('---------------------------------------------------------------')
@@ -208,7 +258,7 @@ def main():
                 print('\n---------------------------------------------------------------')
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 4:
+            elif opcion == 5:
                 clear()
                 print('Post-Orden:')
                 print('------------------------------------------------')
@@ -219,7 +269,7 @@ def main():
                 print('\n------------------------------------------------')
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 5:
+            elif opcion == 6:
                 clear()
                 print('DFS Búsqueda en Profundidad 😜')
                 print('------------------------------------------------')
@@ -238,7 +288,7 @@ def main():
                 print('\n------------------------------------------------')
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 6:
+            elif opcion == 7:
                 clear()
                 print('BFS Búsqueda en anchura o amplitud 🧐')
                 print('------------------------------------------------')
@@ -257,23 +307,28 @@ def main():
                 print('\n------------------------------------------------')
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 7:
+            elif opcion == 8:
                 clear()
+                print('------------------------------------------------')
+                print('La altura del árbol es de: ', tree.obtener_altura())
+                print('El peso de árbol es de: ', tree.obtener_peso())
+                print('------------------------------------------------')
                 print('------------------------------------------------')
                 if tree.esta_vacio():
                     print('❌No hay archivo cargado❌')
                 else:
                     tree.mostrar(4)
+                    print('------------------------------------------------')
+                    tree.mostrar(5)
                 print('\n------------------------------------------------')
                 input('Presione cualquier tecla para continuar...')
                 clear()
-            elif opcion == 8:
+            elif opcion == 9:
                 break
         else:
             print('-- Error -- La opcion ingresada no existe')
             input('Presione cualquier tecla para continuar...')
             clear()
-
 
 if __name__ == '__main__':
     main()
